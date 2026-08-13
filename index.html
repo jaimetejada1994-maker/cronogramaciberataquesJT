@@ -1,1 +1,283 @@
-TEST JT
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cronología de los ciberataques Stuxnet y SolarWinds</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0d0f; --panel:#14171a; --panel-2:#191d21; --line:#262b30;
+    --ink:#e8e6e1; --ink-dim:#9099a1; --ink-faint:#5c6570;
+    --stuxnet:#c97a3d; --solar:#4f8fb8; --stamp:#a83c3c;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(ellipse at 20% 0%, rgba(201,122,61,0.05), transparent 45%),
+      radial-gradient(ellipse at 80% 10%, rgba(79,143,184,0.05), transparent 45%),
+      var(--bg);
+    color:var(--ink); font-family:'IBM Plex Sans', sans-serif; -webkit-font-smoothing:antialiased;
+  }
+  .noise{
+    position:fixed; inset:0; pointer-events:none; opacity:0.02; z-index:1;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  header{position:relative; z-index:2; padding:5rem 1.5rem 2.6rem; max-width:960px; margin:0 auto; border-bottom:1px solid var(--line);}
+  .eyebrow{font-family:'IBM Plex Mono', monospace; font-size:0.7rem; letter-spacing:0.22em; text-transform:uppercase; color:var(--ink-faint); display:flex; align-items:center; gap:0.6rem; margin-bottom:1.5rem;}
+  .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--stamp); animation:pulse 2.4s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.25;}}
+  h1{font-family:'IBM Plex Serif', serif; font-weight:700; font-size:clamp(1.9rem, 4.6vw, 2.9rem); line-height:1.12; max-width:26ch;}
+  h1 .t-stux{color:var(--stuxnet);}
+  h1 .t-solar{color:var(--solar);}
+  .intro{margin-top:1.3rem; max-width:64ch; color:var(--ink-dim); font-size:1rem; line-height:1.62;}
+  .intro p{margin-bottom:1rem;}
+  .intro ul{list-style:none; margin:0 0 1rem; padding:0; display:flex; flex-direction:column; gap:0.75rem;}
+  .intro li{padding-left:1.1rem; position:relative;}
+  .intro li::before{content:'–'; position:absolute; left:0; color:var(--ink-faint);}
+  .intro strong{color:var(--ink); font-weight:600;}
+  .legend{display:flex; gap:2rem; margin-top:2rem; flex-wrap:wrap;}
+  .legend-item{display:flex; align-items:center; gap:0.55rem; font-family:'IBM Plex Mono', monospace; font-size:0.76rem; color:var(--ink-dim);}
+  .legend-swatch{width:11px;height:11px; border-radius:2px;}
+
+  .controls{position:sticky; top:0; z-index:5; backdrop-filter:blur(10px); background:rgba(11,13,15,0.88); border-bottom:1px solid var(--line); padding:0.85rem 1.5rem;}
+  .controls-inner{max-width:960px; margin:0 auto; display:flex; align-items:center; gap:0.55rem; flex-wrap:wrap;}
+  .controls-label{font-family:'IBM Plex Mono', monospace; font-size:0.68rem; color:var(--ink-faint); letter-spacing:0.14em; text-transform:uppercase; margin-right:0.3rem;}
+  .filter-btn{font-family:'IBM Plex Mono', monospace; font-size:0.74rem; background:transparent; border:1px solid var(--line); color:var(--ink-dim); padding:0.4rem 0.85rem; border-radius:100px; cursor:pointer; transition:all 0.2s ease;}
+  .filter-btn:hover{border-color:var(--ink-faint); color:var(--ink);}
+  .filter-btn.active[data-f="all"]{background:var(--ink); color:var(--bg); border-color:var(--ink);}
+  .filter-btn.active[data-f="stuxnet"]{background:var(--stuxnet); color:#1a0f06; border-color:var(--stuxnet);}
+  .filter-btn.active[data-f="solar"]{background:var(--solar); color:#071620; border-color:var(--solar);}
+
+  main{max-width:960px; margin:0 auto; padding:3.2rem 1.5rem 1rem; position:relative; z-index:2;}
+  .track{position:relative; padding-left:2.4rem;}
+  .track::before{content:''; position:absolute; left:5px; top:0.6rem; bottom:0.6rem; width:1px; background:var(--line);}
+  .node{position:relative; padding-bottom:2.6rem; opacity:0; transform:translateY(16px); transition:opacity 0.55s ease, transform 0.55s ease;}
+  .node.visible{opacity:1; transform:translateY(0);}
+  .node.hidden-filter{display:none;}
+  .node::before{content:''; position:absolute; left:-2.4rem; top:0.35rem; width:11px; height:11px; border-radius:50%; background:var(--bg); border:2px solid var(--track-color, var(--ink-faint));}
+  .node[data-track="stuxnet"]{--track-color:var(--stuxnet);}
+  .node[data-track="solar"]{--track-color:var(--solar);}
+  .node-meta{display:flex; align-items:baseline; gap:0.7rem; margin-bottom:0.6rem; flex-wrap:wrap;}
+  .node-date{font-family:'IBM Plex Mono', monospace; font-size:0.76rem; color:var(--track-color, var(--ink-faint));}
+  .node-tag{font-family:'IBM Plex Mono', monospace; font-size:0.62rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--bg); background:var(--track-color, var(--ink-faint)); padding:0.14rem 0.45rem; border-radius:3px;}
+
+  .card{background:var(--panel); border:1px solid var(--line); border-left:2px solid var(--track-color, var(--line)); border-radius:6px; padding:1.3rem 1.4rem 1.15rem;}
+  .card h2{font-family:'IBM Plex Serif', serif; font-weight:600; font-size:1.18rem; margin-bottom:0.85rem; line-height:1.28;}
+  .fgrid{display:grid; grid-template-columns:1fr 1fr; gap:0.9rem 1.2rem;}
+  .field-label{font-family:'IBM Plex Mono', monospace; font-size:0.62rem; letter-spacing:0.13em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:0.25rem;}
+  .field p{font-size:0.86rem; line-height:1.5; color:var(--ink-dim);}
+  @media (max-width:600px){ .fgrid{grid-template-columns:1fr;} }
+
+  .patterns{max-width:960px; margin:3rem auto 0; padding:0 1.5rem 3.5rem; position:relative; z-index:2;}
+  .compare-head{font-family:'IBM Plex Mono', monospace; font-size:0.7rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:0.9rem;}
+  .patterns h3{font-family:'IBM Plex Serif', serif; font-size:1.6rem; font-weight:600; margin-bottom:1.5rem; max-width:32ch;}
+  .p-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(210px,1fr)); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:8px; overflow:hidden;}
+  .p{background:var(--panel-2); padding:1.3rem 1.3rem;}
+  .p .num{font-family:'IBM Plex Mono', monospace; font-size:0.7rem; color:var(--stamp);}
+  .p h4{font-family:'IBM Plex Serif', serif; font-size:0.98rem; margin:0.45rem 0 0.4rem; font-weight:600;}
+  .p p{font-size:0.82rem; color:var(--ink-dim); line-height:1.5;}
+
+  .refs{max-width:960px; margin:0 auto; padding:0 1.5rem 5rem; position:relative; z-index:2;}
+  .refs-head{font-family:'IBM Plex Mono', monospace; font-size:0.7rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:0.4rem;}
+  .refs h3{font-family:'IBM Plex Serif', serif; font-size:1.4rem; font-weight:600; margin-bottom:1.3rem;}
+  .refs ol{list-style:none; counter-reset:ref; display:flex; flex-direction:column; gap:1rem;}
+  .refs li{counter-increment:ref; position:relative; padding-left:2.1rem; font-size:0.84rem; line-height:1.6; color:var(--ink-dim); border-bottom:1px solid var(--line); padding-bottom:1rem;}
+  .refs li:last-child{border-bottom:none;}
+  .refs li::before{content:"[" counter(ref) "]"; position:absolute; left:0; top:0; font-family:'IBM Plex Mono', monospace; color:var(--ink-faint); font-size:0.76rem;}
+  .refs li a{color:var(--solar); text-decoration:none; word-break:break-all;}
+  .refs li a:hover{text-decoration:underline;}
+  .refs-note{font-size:0.76rem; color:var(--ink-faint); margin-top:1.2rem; font-family:'IBM Plex Mono', monospace; line-height:1.6;}
+
+  footer{border-top:1px solid var(--line); padding:2rem 1.5rem 3rem; text-align:center; font-family:'IBM Plex Mono', monospace; font-size:0.68rem; color:var(--ink-faint); position:relative; z-index:2;}
+
+  @media (max-width:600px){ header{padding:3.5rem 1.2rem 2rem;} .track{padding-left:1.8rem;} .node::before{left:-1.8rem;} }
+</style>
+</head>
+<body>
+<div class="noise"></div>
+
+<header>
+  <div class="eyebrow"><span class="dot"></span>Evolución de la ciberguerra</div>
+  <h1>Cronología de los ciberataques <span class="t-stux">Stuxnet</span> y <span class="t-solar">SolarWinds</span></h1>
+
+  <div class="intro">
+    <p>Stuxnet (2010) y SolarWinds (2020) representan los dos hitos fundamentales que marcan el paso de la ciberguerra teórica a la ciberguerra estratégica moderna:</p>
+    <ul>
+      <li><strong>Stuxnet</strong> demostró el nacimiento del arma cibernética cinético-física. Probó que el código no solo sirve para la denegación de servicios o el robo de datos, sino que puede cruzar la frontera digital para provocar destrucción material en la infraestructura crítica de un Estado soberano, redefiniendo el ciberespacio como un dominio de combate real (<em>jus ad bellum</em>).</li>
+      <li><strong>SolarWinds</strong>, una década después, redefinió la ciberguerra hacia la operación encubierta de la cadena de suministro y la persistencia estratégica. Demostró que no siempre se busca la destrucción inmediata, sino la infiltración inadvertida e invisibilizada a escala global, convirtiendo a los proveedores de software privado en "caballos de Troya" para comprometer agencias gubernamentales e infraestructuras estratégicas de forma masiva.</li>
+    </ul>
+    <p>En conjunto, ambos casos ilustran la maduración de las operaciones cibernéticas estatales (APT): Stuxnet sentó el precedente de la capacidad ofensiva de fuerza y sabotaje, mientras que SolarWinds estableció el estándar de la inteligencia, persistencia y vulnerabilidad sistémica en el ciberespacio contemporáneo.</p>
+  </div>
+  <div class="legend">
+    <div class="legend-item"><span class="legend-swatch" style="background:var(--stuxnet)"></span>Stuxnet · 2005–2013</div>
+    <div class="legend-item"><span class="legend-swatch" style="background:var(--solar)"></span>SolarWinds · 2019–2021</div>
+  </div>
+</header>
+
+<div class="controls">
+  <div class="controls-inner">
+    <span class="controls-label">Filtrar</span>
+    <button class="filter-btn active" data-f="all">Ambos casos</button>
+    <button class="filter-btn" data-f="stuxnet">Solo Stuxnet</button>
+    <button class="filter-btn" data-f="solar">Solo SolarWinds</button>
+  </div>
+</div>
+
+<main>
+  <div class="track" id="track"></div>
+</main>
+
+<section class="patterns">
+  <div class="compare-head">Patrones y evolución identificados</div>
+  <h3>Qué cambió y qué se repite entre 2010 y 2021</h3>
+  <div class="p-grid">
+    <div class="p"><div class="num">01</div><h4>Del sabotaje físico al acceso masivo</h4><p>Stuxnet destruyó centrífugas específicas; SolarWinds no destruyó nada, pero abrió miles de redes a la vez. El objetivo pasó de dañar a permanecer y observar.</p></div>
+    <div class="p"><div class="num">02</div><h4>La atribución sigue siendo política, no judicial</h4><p>En ningún caso hubo condenas penales. La respuesta llegó por sanciones económicas y expulsiones diplomáticas, no por la vía judicial.</p></div>
+    <div class="p"><div class="num">03</div><h4>La confianza como superficie de ataque</h4><p>Stuxnet explotó una instalación aislada; SolarWinds explotó la confianza en un proveedor de software legítimo. El perímetro a defender ya no es una red, es una cadena de proveedores.</p></div>
+    <div class="p"><div class="num">04</div><h4>El derecho internacional llega tarde</h4><p>Ambos casos se citan como zona gris legal: operaciones por debajo del umbral de "uso de la fuerza", donde las normas existentes aún no dan una respuesta clara.</p></div>
+  </div>
+</section>
+
+<section class="refs">
+  <div class="refs-head">Referencias</div>
+  <h3>Fuentes</h3>
+  <ol>
+    <li>Coco, A., Dias, T., &amp; van Benthem, T. (2022). Illegal: The SolarWinds hack under international law. <em>European Journal of International Law, 33</em>(4), 1275–1286. <a href="https://doi.org/10.1093/ejil/chac063" target="_blank" rel="noopener">https://doi.org/10.1093/ejil/chac063</a></li>
+    <li>Kerr, P. K., Rollins, J., &amp; Theohary, C. A. (2010). <em>The Stuxnet computer worm: Harbinger of an emerging warfare capability</em> (CRS Report No. R41524). Congressional Research Service. <a href="https://www.congress.gov/crs_external_products/R/PDF/R41524/R41524.3.pdf" target="_blank" rel="noopener">https://www.congress.gov/crs_external_products/R/PDF/R41524/R41524.3.pdf</a></li>
+    <li>Langner, R. (2011). Stuxnet: Dissecting a cyberwarfare weapon. <em>IEEE Security &amp; Privacy, 9</em>(3), 49–51. <a href="https://doi.org/10.1109/MSP.2011.67" target="_blank" rel="noopener">https://doi.org/10.1109/MSP.2011.67</a></li>
+    <li>Martínez, J., &amp; Durán, J. M. (2021). Software supply chain attacks, a threat to global cybersecurity: SolarWinds' case study. <em>International Journal of Safety and Security Engineering, 11</em>(5), 537–545. <a href="https://doi.org/10.18280/ijsse.110505" target="_blank" rel="noopener">https://doi.org/10.18280/ijsse.110505</a></li>
+    <li>NATO Cooperative Cyber Defence Centre of Excellence. (2021, September 17). <em>Stuxnet (2010)</em>. International Cyber Law: Interactive Toolkit. <a href="https://cyberlaw.ccdcoe.org/wiki/Stuxnet_(2010)" target="_blank" rel="noopener">https://cyberlaw.ccdcoe.org/wiki/Stuxnet_(2010)</a></li>
+    <li>NATO Cooperative Cyber Defence Centre of Excellence. (2021, June 3). <em>SolarWinds (2020)</em>. International Cyber Law: Interactive Toolkit. <a href="https://cyberlaw.ccdcoe.org/wiki/SolarWinds_(2020)" target="_blank" rel="noopener">https://cyberlaw.ccdcoe.org/wiki/SolarWinds_(2020)</a></li>
+    <li>The Belfer Center for Science and International Affairs. (2021, June 21). <em>SolarWinds attack</em>. Harvard Kennedy School. <a href="https://www.belfercenter.org/publication/solarwinds-attack" target="_blank" rel="noopener">https://www.belfercenter.org/publication/solarwinds-attack</a></li>
+    <li>Zetter, K. (2013, February 26). The real story of Stuxnet. <em>IEEE Spectrum</em>. <a href="https://spectrum.ieee.org/the-real-story-of-stuxnet" target="_blank" rel="noopener">https://spectrum.ieee.org/the-real-story-of-stuxnet</a></li>
+  </ol>
+</section>
+
+<script>
+const DATA = [
+  {
+    date:"2005 – 2009", track:"stuxnet", tag:"Contexto",
+    title:"Irán acelera el enriquecimiento en Natanz",
+    geo:"Años de diplomacia y sanciones fallidas para frenar el programa nuclear iraní llevan a EE.UU. e Israel a buscar una vía encubierta que evite un conflicto militar abierto.",
+    tech:"Se desarrolla en secreto un arma digital capaz de operar dentro de la red aislada (air-gapped) de la planta de Natanz, sin conexión directa a internet.",
+    impact:"Fase de preparación; ninguna acción pública todavía.",
+    legal:"No existía en ese momento un marco legal internacional específico para operaciones cibernéticas contra infraestructura nuclear."
+  },
+  {
+    date:"Jun 2010", track:"stuxnet", tag:"Descubrimiento",
+    title:"VirusBlokAda detecta el gusano en Bielorrusia",
+    geo:"Una firma de seguridad bielorrusa, contratada por técnicos iraníes ante fallas inexplicables, encuentra archivos maliciosos desconocidos.",
+    tech:"El gusano se propagaba mediante memorias USB y explotaba vulnerabilidades de día cero de Windows para moverse entre computadoras sin conexión a internet.",
+    impact:"Empieza el análisis forense internacional que revelaría meses después la magnitud real del ataque.",
+    legal:"Sin atribución oficial todavía; se abre la discusión pública sobre el origen del malware."
+  },
+  {
+    date:"Sep 2010", track:"stuxnet", tag:"Análisis técnico",
+    title:"Symantec publica el dossier completo de Stuxnet",
+    geo:"El informe confirma que el objetivo eran instalaciones industriales iraníes, señalando por primera vez con evidencia técnica a Natanz.",
+    tech:"Se identifican cuatro vulnerabilidades de día cero, certificados digitales robados y código diseñado a medida para los controladores Siemens S7-300/400 de las centrífugas.",
+    impact:"Queda claro que no es malware genérico, sino un arma de precisión hecha para un objetivo físico único.",
+    legal:"Expertos comienzan a discutir si Stuxnet constituye un 'uso de la fuerza' bajo el derecho internacional."
+  },
+  {
+    date:"Nov 2010", track:"stuxnet", tag:"Reconocimiento oficial",
+    title:"Irán admite daños en su planta nuclear",
+    geo:"El presidente Mahmoud Ahmadinejad reconoce públicamente que 'software' instalado por actores no identificados causó problemas en algunas centrífugas.",
+    tech:"El malware modificaba la frecuencia de rotación de los motores mientras mostraba lecturas normales al operador, ocultando el sabotaje en tiempo real.",
+    impact:"Estimaciones posteriores calculan hasta 1,000 centrífugas IR-1 dañadas —cerca del 10% del stock operativo— entre 2009 y 2010.",
+    legal:"Irán no presenta una denuncia formal ante organismos internacionales; EE.UU. e Israel nunca reconocen oficialmente su autoría."
+  },
+  {
+    date:"2012 – 2013", track:"stuxnet", tag:"Represalia",
+    title:"Irán responde con capacidad ofensiva propia",
+    geo:"Sin atribución legal formal contra sus atacantes, Irán interpreta el episodio como un acto de guerra encubierta y desarrolla sus propias armas digitales.",
+    tech:"El ataque Shamoon borra datos de miles de computadoras de Saudi Aramco; en paralelo, una ola de ataques DDoS golpea bancos estadounidenses.",
+    impact:"Marca el inicio de una carrera armamentista cibernética: ya no hay un solo actor con esta capacidad ofensiva.",
+    legal:"La ambigüedad legal de Stuxnet se convierte en precedente que otros estados usan para justificar sus propias operaciones."
+  },
+  {
+    date:"Mar – Jun 2020", track:"solar", tag:"Compromiso inicial",
+    title:"Código malicioso se infiltra en Orion",
+    geo:"En medio de tensiones ya latentes entre Washington y Moscú, agentes vinculados al Servicio de Inteligencia Exterior ruso (SVR) inician una operación de espionaje a gran escala.",
+    tech:"Insertan el backdoor SUNBURST directamente en el proceso legítimo de actualización del software Orion de SolarWinds, usado por miles de organizaciones para monitorear sus redes.",
+    impact:"Cerca de 18,000 organizaciones descargan la actualización comprometida sin saberlo.",
+    legal:"Al tratarse de espionaje y no de sabotaje físico, el caso plantea desde el inicio un desafío distinto para el derecho internacional."
+  },
+  {
+    date:"8 dic 2020", track:"solar", tag:"Primera señal",
+    title:"FireEye reporta el robo de sus herramientas",
+    geo:"La firma de ciberseguridad FireEye anuncia que le robaron sus herramientas de 'Red Team', usadas para simular ataques a sus clientes.",
+    tech:"La investigación interna rastrea el origen de la brecha hasta el software Orion, destapando la cadena de suministro comprometida.",
+    impact:"Este hallazgo es el hilo que permite descubrir la operación completa antes de que se expandiera aún más.",
+    legal:"Se activa la coordinación entre el sector privado y agencias federales de EE.UU. para la respuesta inicial."
+  },
+  {
+    date:"13 dic 2020", track:"solar", tag:"Revelación pública",
+    title:"Se confirma un ataque a la cadena de suministro",
+    geo:"Se revela que agencias como Tesoro, Comercio, Seguridad Nacional y Defensa de EE.UU. fueron comprometidas, junto con empresas como Microsoft.",
+    tech:"El backdoor permitía moverse lateralmente, exfiltrar información y desplegar malware adicional en redes que confiaban ciegamente en el proveedor.",
+    impact:"Se describe como uno de los actos de espionaje más extensos jamás detectados contra infraestructura estadounidense.",
+    legal:"Se discute si la operación constituye una violación de la soberanía de los estados afectados según el derecho internacional consuetudinario."
+  },
+  {
+    date:"23 feb 2021", track:"solar", tag:"Rendición de cuentas",
+    title:"Audiencia en el Senado de Estados Unidos",
+    geo:"Ejecutivos de SolarWinds, FireEye y Microsoft testifican ante el Comité de Inteligencia del Senado sobre el alcance del ataque.",
+    tech:"Se detalla públicamente cómo una actualización de software rutinaria se convirtió en el vector de una de las mayores brechas de la historia.",
+    impact:"Expertos estiman que la recuperación completa de las organizaciones afectadas podría tomar hasta 18 meses.",
+    legal:"El Congreso analiza reformas regulatorias para la seguridad de la cadena de suministro de software del gobierno federal."
+  },
+  {
+    date:"15 abr 2021", track:"solar", tag:"Respuesta legal",
+    title:"EE.UU. sanciona a Rusia y atribuye el ataque al SVR",
+    geo:"El gobierno de Biden atribuye oficialmente la operación al Servicio de Inteligencia Exterior ruso, como parte de una respuesta que calificó de 'vista y no vista'.",
+    tech:"Se publican muestras del malware (GoldMax, GoldFinder, Sibot) para ayudar a otras organizaciones a detectar la misma infraestructura ofensiva.",
+    impact:"Se restringe el mercado de bonos rusos y se refuerzan controles sobre proveedores tecnológicos con vínculos a Rusia.",
+    legal:"EE.UU. sanciona a 32 entidades, expulsa a 10 operativos de inteligencia y emite una orden ejecutiva sobre seguridad de la cadena de suministro de TIC; hasta hoy ningún individuo ha sido acusado penalmente."
+  }
+];
+
+const trackEl = document.getElementById('track');
+DATA.forEach((d,i)=>{
+  const node = document.createElement('div');
+  node.className = 'node';
+  node.dataset.track = d.track;
+  node.style.transitionDelay = (i%5)*0.04 + 's';
+  node.innerHTML = `
+    <div class="node-meta">
+      <span class="node-date">${d.date}</span>
+      <span class="node-tag">${d.tag}</span>
+    </div>
+    <div class="card">
+      <h2>${d.title}</h2>
+      <div class="fgrid">
+        <div class="field"><div class="field-label">Contexto geopolítico</div><p>${d.geo}</p></div>
+        <div class="field"><div class="field-label">Técnicas utilizadas</div><p>${d.tech}</p></div>
+        <div class="field"><div class="field-label">Impacto</div><p>${d.impact}</p></div>
+        <div class="field"><div class="field-label">Respuesta legal / internacional</div><p>${d.legal}</p></div>
+      </div>
+    </div>`;
+  trackEl.appendChild(node);
+});
+
+const io = new IntersectionObserver((entries)=>{ entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('visible'); }); }, {threshold:0.1});
+document.querySelectorAll('.node').forEach(n=>io.observe(n));
+
+document.querySelectorAll('.filter-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const f = btn.dataset.f;
+    document.querySelectorAll('.node').forEach(n=>{
+      const show = f==='all' || n.dataset.track===f;
+      n.classList.toggle('hidden-filter', !show);
+    });
+  });
+});
+</script>
+</body>
+</html>
